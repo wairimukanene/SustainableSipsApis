@@ -3,6 +3,8 @@ import fastifyCors from '@fastify/cors';
 import fastifyMySQL from '@fastify/mysql';
 import userRoutes from './routes/userRoutes'
 import badBehaviorRoutes from './routes/BadbehaviourRoutes';
+import goodBehaviorRoutes from './routes/GoodbehaviourRoutes';
+
 
 const app = fastify({ logger: true });
 
@@ -15,6 +17,7 @@ app.register(fastifyMySQL, {
 // Register routes
 app.register(userRoutes);
 app.register(badBehaviorRoutes);
+app.register(goodBehaviorRoutes);
 console.log(app.printRoutes());
 
 const start = async () => {

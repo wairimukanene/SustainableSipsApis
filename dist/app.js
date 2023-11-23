@@ -8,6 +8,7 @@ const cors_1 = __importDefault(require("@fastify/cors"));
 const mysql_1 = __importDefault(require("@fastify/mysql"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const BadbehaviourRoutes_1 = __importDefault(require("./routes/BadbehaviourRoutes"));
+const GoodbehaviourRoutes_1 = __importDefault(require("./routes/GoodbehaviourRoutes"));
 const app = (0, fastify_1.default)({ logger: true });
 app.register(cors_1.default);
 app.register(mysql_1.default, {
@@ -17,6 +18,7 @@ app.register(mysql_1.default, {
 // Register routes
 app.register(userRoutes_1.default);
 app.register(BadbehaviourRoutes_1.default);
+app.register(GoodbehaviourRoutes_1.default);
 console.log(app.printRoutes());
 const start = async () => {
     try {
