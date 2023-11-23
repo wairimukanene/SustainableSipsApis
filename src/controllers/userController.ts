@@ -7,6 +7,7 @@ import { RowDataPacket, FieldPacket } from 'mysql2';
 
 // Define an interface for your route parameters
 interface RouteParams extends RouteGenericInterface {
+    UserId: any;
 
     id: string;
 
@@ -24,10 +25,10 @@ export interface CustomRequest extends FastifyRequest<{ Params: RouteParams, Bod
     body: RequestBody;
 }
 
-export const getUsers = async (req: CustomRequest, reply: FastifyReply) => {
+export const getUsers = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
         // Use the query method directly on the pool
-        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await req.mysql.query('SELECT * FROM users');
+        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query('SELECT * FROM users');
 
         // Convert RowDataPacket objects to User objects
         const users: User[] = JSON.parse(JSON.stringify(rows));
@@ -40,13 +41,13 @@ export const getUsers = async (req: CustomRequest, reply: FastifyReply) => {
 };
 
 
-export const getUser = async (req: CustomRequest, reply: FastifyReply) => {
+export const getUser = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
         // Get the user ID from the request parameters
         const id = req.params.id;
 
         // Use the query method directly on the pool
-        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await req.mysql.query(`SELECT * FROM users WHERE UserId = ?`, [id]);
+        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query(`SELECT * FROM users WHERE UserId = ?`, [id]);
 
         // Convert RowDataPacket objects to User objects
         const user: User = JSON.parse(JSON.stringify(rows[0]));
@@ -65,12 +66,15 @@ export const getUser = async (req: CustomRequest, reply: FastifyReply) => {
 };
 
 
-export const createUser = async (req: CustomRequest, reply: FastifyReply) => {
+
+export const createUser = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
         // Get the user data from the request body
-        const userData: User = req.body.body;
+        console.log(req.body);
+        const userData: any = req.body;
+
         // Use the query method directly on the pool
-        const [result]: any = await req.mysql.query('INSERT INTO users SET ?', userData);
+        const [result]: any = await fastify.mysql.query('INSERT INTO users ( Username, Email, Password) VALUES ( ?, ?, ?)', [userData.Username, userData.Email, userData.Password]);
 
         // Check if the user was created
         if (!result.affectedRows) {
@@ -82,7 +86,7 @@ export const createUser = async (req: CustomRequest, reply: FastifyReply) => {
         const id = result.insertId;
 
         // Query the database for the created user
-        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await req.mysql.query(`SELECT * FROM users WHERE id = ?`, [id]);
+        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query(`SELECT * FROM users WHERE UserId = ?`, [id]);
 
         // Convert RowDataPacket objects to User objects
         const user: User = JSON.parse(JSON.stringify(rows[0]));
@@ -95,16 +99,20 @@ export const createUser = async (req: CustomRequest, reply: FastifyReply) => {
 };
 
 
-export const updateUser = async (req: CustomRequest, reply: FastifyReply) => {
+export const updateUser = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
         // Get the user ID from the request parameters
-        const id = req.params.id;
+        console.log(req.params);
+        const UserID = req.params.UserId;
 
-        // Get the new user data from the request body
-        const newUserData: User = req.body.body;
+        const newUserData: any = req.body;
 
-        // Use the query method directly on the pool
-        const [result]: any = await req.mysql.query('UPDATE users SET ? WHERE id = ?', [newUserData, id]);
+        const values = Object.values(newUserData);
+        console.log(values);
+
+        const [result]: any = await fastify.mysql.query('UPDATE users SET Username = ?, Email = ?, Password = ? WHERE UserId = ?', [newUserData.Username, newUserData.Email, newUserData.Password, UserID]);
+
+        console.log(result);
 
         // Check if the user was updated
         if (!result.affectedRows) {
@@ -113,7 +121,8 @@ export const updateUser = async (req: CustomRequest, reply: FastifyReply) => {
         }
 
         // Query the database for the updated user
-        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await req.mysql.query(`SELECT * FROM users WHERE id = ?`, [id]);
+        const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query(`SELECT * FROM users WHERE UserId = ?`, [UserID]);
+        console.log(rows[0]);
 
         // Convert RowDataPacket objects to User objects
         const user: User = JSON.parse(JSON.stringify(rows[0]));
@@ -126,13 +135,21 @@ export const updateUser = async (req: CustomRequest, reply: FastifyReply) => {
 };
 
 
-export const deleteUser = async (req: CustomRequest, reply: FastifyReply) => {
+
+export const deleteUser = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
         // Get the user ID from the request parameters
-        const id = req.params.id;
+        console.log(req.params);
+        const UserID = parseInt(req.params.UserId, 10);
+        // Check if UserID is a valid number
+        if (isNaN(UserID)) {
+            reply.status(400).send({ error: 'Invalid User ID', message: 'User ID must be a valid number' });
+            return;
+        }
+
 
         // Use the query method directly on the pool
-        const [result]: any = await req.mysql.query('DELETE FROM users WHERE id = ?', [id]);
+        const [result]: any = await fastify.mysql.query('DELETE FROM users WHERE UserId = ?', [UserID]);
 
         // Check if the user was deleted
         if (!result.affectedRows) {
@@ -146,4 +163,5 @@ export const deleteUser = async (req: CustomRequest, reply: FastifyReply) => {
         reply.status(500).send({ error: 'Internal Server Error', message: error.message });
     }
 };
+
 

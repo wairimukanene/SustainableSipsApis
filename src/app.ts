@@ -12,7 +12,8 @@ app.register(fastifyMySQL, {
 });
 
 // Register routes
-app.register(userRoutes, { prefix: '/users' });
+app.register(userRoutes);
+
 
 console.log(app.printRoutes());
 
