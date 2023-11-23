@@ -6,9 +6,6 @@ const userRoutes = (fastify, _, done) => {
     fastify.get('/users', async (req, reply) => {
         await (0, userController_1.getUsers)(fastify, req, reply);
     });
-    // fastify.get('/users', async (req: FastifyRequest, reply: FastifyReply) => {
-    //     reply.send({ message: 'Hello from /users' });
-    // });
     // Get a specific user by ID
     fastify.get('/users/:UserId', async (req, reply) => {
         await (0, userController_1.getUser)(fastify, req, reply);

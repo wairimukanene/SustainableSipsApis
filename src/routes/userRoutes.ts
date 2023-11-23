@@ -7,9 +7,6 @@ const userRoutes: FastifyPluginCallback = (fastify, _, done) => {
     fastify.get('/users', async (req: FastifyRequest, reply: FastifyReply) => {
         await getUsers(fastify, req as CustomRequest, reply);
     });
-    // fastify.get('/users', async (req: FastifyRequest, reply: FastifyReply) => {
-    //     reply.send({ message: 'Hello from /users' });
-    // });
 
 
     // Get a specific user by ID
