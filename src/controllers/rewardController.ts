@@ -110,3 +110,41 @@ export const deleteReward = async (fastify: any, req: CustomRequest, reply: Fast
         reply.status(500).send({ error: 'Internal Server Error', message: error.message });
     }
 };
+
+export const awardReward = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
+    try {
+        // Query to find the user with the most positive points
+        const [userRows]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query('SELECT UserID, PositivePoints FROM users ORDER BY PositivePoints DESC LIMIT 1');
+
+        if (userRows.length === 0) {
+            reply.status(404).send({ error: 'No users found' });
+            return;
+        }
+
+        const { UserID, PositivePoints } = userRows[0];
+
+        // You may want to define a threshold for positive points to determine eligibility for a reward
+        const positivePointsThreshold = 2; // Adjust as needed
+
+        if (PositivePoints >= positivePointsThreshold) {
+            // Award a reward to the user with the most positive points
+            const [result]: any = await fastify.mysql.query('INSERT INTO rewards (UserID, Name, Description, Value) VALUES (?, ?, ?, ?)', [UserID, 'Top Performer Reward', 'Congratulations on being the top performer!', 50]);
+
+            if (!result.affectedRows) {
+                reply.status(500).send({ error: 'Internal Server Error', message: 'Failed to award reward' });
+                return;
+            }
+
+            const rewardID = result.insertId;
+            const [rewardRows]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query('SELECT * FROM rewards WHERE RewardID = ?', [rewardID]);
+            const reward: Reward = JSON.parse(JSON.stringify(rewardRows[0]));
+
+            reply.send({ message: 'Reward awarded successfully', reward });
+        } else {
+            reply.send({ message: 'No eligible users for a reward' });
+        }
+    } catch (error: any) {
+        reply.status(500).send({ error: 'Internal Server Error', message: error.message });
+    }
+};
+

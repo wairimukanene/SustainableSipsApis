@@ -13,11 +13,11 @@ interface RequestBody {
     body: GoodBehavior;
 }
 
-// Extend the FastifyRequest interface to include the mysql property and the body property
 export interface CustomRequest extends FastifyRequest<{ Params: RouteParams, Body: { body: GoodBehavior } }, RawServerDefault, IncomingMessage> {
     mysql: MySQLPromisePool;
     body: RequestBody;
 }
+
 
 export const getGoodBehaviors = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
@@ -62,10 +62,10 @@ export const createGoodBehavior = async (fastify: any, req: CustomRequest, reply
     try {
         // Get the good behavior data from the request body
         console.log(req.body);
-        const goodBehaviorData: any = req.body;
+        const goodBehaviorData: any = req.body.body;
 
         // Use the query method directly on the pool
-        const [result]: any = await fastify.mysql.query('INSERT INTO GoodBehaviors (Name, Description) VALUES (?, ?)', [goodBehaviorData.Name, goodBehaviorData.Description]);
+        const [result]: any = await fastify.mysql.query('INSERT INTO GoodBehaviors (Name, Description,UserID) VALUES (?, ?,?)', [goodBehaviorData.Name, goodBehaviorData.Description, goodBehaviorData.UserID]);
 
         // Check if the good behavior was created
         if (!result.affectedRows) {
@@ -75,6 +75,12 @@ export const createGoodBehavior = async (fastify: any, req: CustomRequest, reply
 
         // Get the ID of the created good behavior
         const id = result.insertId;
+
+        // Update the user's points (for example, +1 for good behavior)
+        await updatePoints(req.body.body.UserID, -1, fastify);
+
+
+
 
         // Query the database for the created good behavior
         const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query(`SELECT * FROM GoodBehaviors WHERE GoodBehaviorID = ?`, [id]);
@@ -143,6 +149,12 @@ export const deleteGoodBehavior = async (fastify: any, req: CustomRequest, reply
             reply.status(404).send({ error: 'Good Behavior Not Found' });
             return;
         }
+        // Update the user's points (for example, -1 for deleting good behavior)
+        await updatePoints(req.body.body.UserID, 1, fastify);
+
+
+
+
 
         // Send a success message in the response
         reply.send({ message: 'Good Behavior deleted successfully' });
@@ -150,3 +162,9 @@ export const deleteGoodBehavior = async (fastify: any, req: CustomRequest, reply
         reply.status(500).send({ error: 'Internal Server Error', message: error.message });
     }
 };
+
+// Helper function to update user points
+async function updatePoints(userId: number, points: number, fastify: any) {
+    // Update positive points in the database
+    await fastify.mysql.query('UPDATE Users SET PositivePoints = PositivePoints + ? WHERE UserID = ?', [points, userId]);
+}

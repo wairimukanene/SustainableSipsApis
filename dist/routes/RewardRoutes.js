@@ -23,6 +23,10 @@ const rewardRoutes = (fastify, _, done) => {
     fastify.delete('/rewards/:RewardID', async (req, reply) => {
         await (0, rewardController_1.deleteReward)(fastify, req, reply);
     });
+    // Award a reward to the user with the most positive points
+    fastify.post('/award-reward', async (req, reply) => {
+        await (0, rewardController_1.awardReward)(fastify, req, reply);
+    });
     done();
 };
 exports.default = rewardRoutes;

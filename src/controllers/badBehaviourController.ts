@@ -20,6 +20,7 @@ export interface CustomRequest extends FastifyRequest<{ Params: RouteParams, Bod
     body: RequestBody;
 }
 
+
 export const getBadBehaviors = async (fastify: any, req: CustomRequest, reply: FastifyReply) => {
     try {
         // Use the query method directly on the pool
@@ -64,10 +65,10 @@ export const createBadBehavior = async (fastify: any, req: CustomRequest, reply:
         // Get the bad behavior data from the request body
         console.log(req.body);
         //const badBehaviorData: BadBehavior = req.body;
-        const badBehaviorData: any = req.body;
+        const badBehaviorData: any = req.body.body;
 
         // Use the query method directly on the pool
-        const [result]: any = await fastify.mysql.query('INSERT INTO BadBehaviors (Name, Description) VALUES (?, ?)', [badBehaviorData.Name, badBehaviorData.Description]);
+        const [result]: any = await fastify.mysql.query('INSERT INTO BadBehaviors (Name, Description,UserID) VALUES (?, ?,?)', [badBehaviorData.Name, badBehaviorData.Description, badBehaviorData.UserID]);
 
         // Check if the bad behavior was created
         if (!result.affectedRows) {
@@ -77,6 +78,10 @@ export const createBadBehavior = async (fastify: any, req: CustomRequest, reply:
 
         // Get the ID of the created bad behavior
         const id = result.insertId;
+        // Update the user's points (for example, +1 for bad  behavior)
+        await updatePoints(req.body.body.UserID, 2, fastify);
+
+
 
         // Query the database for the created bad behavior
         const [rows, fields]: [RowDataPacket[], FieldPacket[]] = await fastify.mysql.query(`SELECT * FROM BadBehaviors WHERE BadBehaviorID = ?`, [id]);
@@ -147,6 +152,9 @@ export const deleteBadBehavior = async (fastify: any, req: CustomRequest, reply:
             reply.status(404).send({ error: 'Bad Behavior Not Found' });
             return;
         }
+        // Update the user's points (for example, -1 for deleting bad behavior)
+        await updatePoints(req.body.body.UserID, -1, fastify);
+
 
         // Send a success message in the response
         reply.send({ message: 'Bad Behavior deleted successfully' });
@@ -154,3 +162,10 @@ export const deleteBadBehavior = async (fastify: any, req: CustomRequest, reply:
         reply.status(500).send({ error: 'Internal Server Error', message: error.message });
     }
 };
+// Helper function to update user points
+async function updatePoints(userId: number, points: number, fastify: any) {
+    // Update positive points in the database
+    await fastify.mysql.query('UPDATE Users SET NegativePoints = NegativePoints + ? WHERE UserID = ?', [points, userId]);
+
+    console.log('Points updated successfully');
+}

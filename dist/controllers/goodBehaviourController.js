@@ -40,9 +40,9 @@ const createGoodBehavior = async (fastify, req, reply) => {
     try {
         // Get the good behavior data from the request body
         console.log(req.body);
-        const goodBehaviorData = req.body;
+        const goodBehaviorData = req.body.body;
         // Use the query method directly on the pool
-        const [result] = await fastify.mysql.query('INSERT INTO GoodBehaviors (Name, Description) VALUES (?, ?)', [goodBehaviorData.Name, goodBehaviorData.Description]);
+        const [result] = await fastify.mysql.query('INSERT INTO GoodBehaviors (Name, Description,UserID) VALUES (?, ?,?)', [goodBehaviorData.Name, goodBehaviorData.Description, goodBehaviorData.UserID]);
         // Check if the good behavior was created
         if (!result.affectedRows) {
             reply.status(500).send({ error: 'Internal Server Error', message: 'Failed to create good behavior' });
@@ -50,6 +50,8 @@ const createGoodBehavior = async (fastify, req, reply) => {
         }
         // Get the ID of the created good behavior
         const id = result.insertId;
+        // Update the user's points (for example, +1 for good behavior)
+        await updatePoints(req.body.body.UserID, -1, fastify);
         // Query the database for the created good behavior
         const [rows, fields] = await fastify.mysql.query(`SELECT * FROM GoodBehaviors WHERE GoodBehaviorID = ?`, [id]);
         // Convert RowDataPacket objects to GoodBehavior objects
@@ -107,6 +109,8 @@ const deleteGoodBehavior = async (fastify, req, reply) => {
             reply.status(404).send({ error: 'Good Behavior Not Found' });
             return;
         }
+        // Update the user's points (for example, -1 for deleting good behavior)
+        await updatePoints(req.body.body.UserID, 1, fastify);
         // Send a success message in the response
         reply.send({ message: 'Good Behavior deleted successfully' });
     }
@@ -115,3 +119,8 @@ const deleteGoodBehavior = async (fastify, req, reply) => {
     }
 };
 exports.deleteGoodBehavior = deleteGoodBehavior;
+// Helper function to update user points
+async function updatePoints(userId, points, fastify) {
+    // Update positive points in the database
+    await fastify.mysql.query('UPDATE Users SET PositivePoints = PositivePoints + ? WHERE UserID = ?', [points, userId]);
+}
