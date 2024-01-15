@@ -1,4 +1,4 @@
-// src/routers/saleRouter.ts
+
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import saleController from '../controllers/Sales.js';
 

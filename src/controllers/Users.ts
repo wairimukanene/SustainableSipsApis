@@ -1,11 +1,11 @@
-// src/controllers/userController.ts
+
 import { RouteGenericInterface, FastifyRequest, FastifyReply } from 'fastify';
 import userModel from '../models/Users.js';
 
 interface RouteParams extends RouteGenericInterface {
     Params: {
         id: number;
-        // Add as many as you have
+
     };
 }
 

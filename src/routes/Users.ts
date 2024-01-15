@@ -1,4 +1,4 @@
-// src/routers/userRouter.ts
+
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import userController from '../controllers/Users.js';
 

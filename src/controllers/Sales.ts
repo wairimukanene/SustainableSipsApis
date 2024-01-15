@@ -1,6 +1,6 @@
-// src/controllers/saleController.ts
+
 import { RouteGenericInterface, FastifyRequest, FastifyReply } from 'fastify';
-import saleModel from '../models/Sales.js'; // Assuming your Sale model file is named Sale.js
+import saleModel from '../models/Sales.js';
 
 interface RouteParams extends RouteGenericInterface {
     Params: {
